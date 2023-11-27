@@ -10,14 +10,14 @@ import tty
 import termios
 import matplotlib.pyplot as plt
 
-fp = f"{sys.path[0]}/backup_zed_10.avi"
+fp = f"{sys.path[0]}/parking_backup.mp4"
 
 
 class BackupTraj:
 
     def __init__(self, file_path):
         # Initialize vehicle parameters
-        self.W = 1.2
+        self.W = 2.2
         self.L = 4.5
         self.max_str = 45
 
@@ -72,8 +72,8 @@ class BackupTraj:
         self.yl = [(-self.W / 2, length) for length in lengths]
         self.yr = [(self.W / 2, length) for length in lengths]
         traj_wy4 = np.full(len(traj_wx), self.yl[-1][1])
-        traj_wy2 = np.full(len(traj_wx), self.yl[-1][1] / 2)
-        traj_wy = np.full(len(traj_wx), self.yl[-1][1] / 4)
+        traj_wy2 = np.full(len(traj_wx), self.yl[-1][1]*2/3)
+        traj_wy = np.full(len(traj_wx), self.yl[-1][1]/2)
         self.traj_w4 = [traj_wx, traj_wy4]
         self.traj_w2 = [traj_wx, traj_wy2]
         self.traj_w = [traj_wx, traj_wy]
@@ -127,8 +127,8 @@ class BackupTraj:
         """
 
         # Initialize the camera extrinsic parameter
-        h = 0.65
-        theta = np.radians(13)
+        h = 1.18
+        theta = np.radians(15)
 
         # Load trajectories
         xl, yl = zip(*self.yl)
@@ -185,7 +185,7 @@ class BackupTraj:
             else:
                 pixbr_u.append(u), pixbr_v.append(v)
 
-        # 6m Baseline width in the pixel frame
+        # 5m Baseline width in the pixel frame
         pixw4_u = []
         pixw4_v = []
         for i, x in enumerate(xw4):
@@ -196,7 +196,7 @@ class BackupTraj:
             else:
                 pixw4_u.append(u), pixw4_v.append(v)
 
-        # 3m Baseline width in the pixel frame
+        # 4m Baseline width in the pixel frame
         pixw2_u = []
         pixw2_v = []
         for i, x in enumerate(xw2):
@@ -207,7 +207,7 @@ class BackupTraj:
             else:
                 pixw2_u.append(u), pixw2_v.append(v)
 
-        # 1.5m Baseline width in the pixel frame
+        # 3m Baseline width in the pixel frame
         pixw_u = []
         pixw_v = []
         for i, x in enumerate(xw):
@@ -297,7 +297,7 @@ class BackupTraj:
                 frame = cv2.polylines(frame, [bw], False, (0, 0, 255), 8)
                 cv2.imshow('Dynamic Backup Line', frame)
                 print("Current steering angle is:", np.degrees(self.delta))
-                if cv2.waitKey(1) & 0xFF == ord('q'):
+                if cv2.waitKey(5) & 0xFF == ord('q'):
                     break
 
             else:
