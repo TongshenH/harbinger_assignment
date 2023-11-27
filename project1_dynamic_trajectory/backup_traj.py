@@ -134,7 +134,7 @@ class BackupTraj:
         cy = 547.373
         # Initialize the camera extrinsic parameter
         h = 0.65
-        theta = np.radians(13)
+        theta = np.radians(0)
 
         # Load trajectories
         xl, yl = zip(*self.yl)
