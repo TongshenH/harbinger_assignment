@@ -2,7 +2,7 @@
 # Dynamic backup line 
 
 This is assignment 1 dynamic backup line.
-![demo]()
+![demo](https://github.com/TongshenH/harbinger_assignment/blob/master/project1_dynamic_trajectory/materials/backup_demo.gif)
 
 ## Launch 
 Run the below command:
