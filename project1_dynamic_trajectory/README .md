@@ -5,11 +5,11 @@ This is assignment 1 dynamic backup line.
 ![demo](https://github.com/TongshenH/harbinger_assignment/blob/master/project1_dynamic_trajectory/materials/backup_demo.gif)
 
 ## Launch 
-Run the below command:
+Run the below command in the terminal:
 
 `Python3 backup_traj.py` 
 
-Type your desired steering agnle (deg)
+Type your desired steering agnle (deg), press a to turn right, press d to turn left.
 
 ## Method
 
