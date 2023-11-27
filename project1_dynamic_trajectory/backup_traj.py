@@ -134,7 +134,7 @@ class BackupTraj:
         cy = 547.373
         # Initialize the camera extrinsic parameter
         h = 0.65
-        theta = np.radians(0)
+        theta = np.radians(13)
 
         # Load trajectories
         xl, yl = zip(*self.yl)
@@ -305,6 +305,6 @@ class BackupTraj:
 if __name__ == "__main__":
     backup_traj = BackupTraj(fp)
     backup_traj.str_input()
-    backup_traj.traj_cartesian(visualization=True)
+    backup_traj.traj_cartesian(visualization=False)
     backup_traj.coordinate_transform()
     backup_traj.visualization()
