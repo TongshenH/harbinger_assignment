@@ -2,6 +2,7 @@
 # Dynamic backup line 
 
 This is assignment 1 dynamic backup line.
+![demo]()
 
 ## Launch 
 Run the below command:

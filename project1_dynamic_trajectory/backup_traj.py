@@ -1,22 +1,23 @@
 import sys
 import os
-from collections import namedtuple
 
 current = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, current + "/materials")
 
 import cv2
 import numpy as np
+import tty
+import termios
 import matplotlib.pyplot as plt
 
-fp = f"{sys.path[0]}/backup_zed.avi"
+fp = f"{sys.path[0]}/backup_zed_10.avi"
 
 
 class BackupTraj:
 
     def __init__(self, file_path):
         # Initialize vehicle parameters
-        self.W = 1.4
+        self.W = 1.2
         self.L = 4.5
         self.max_str = 45
 
@@ -32,6 +33,10 @@ class BackupTraj:
         self.traj_w2 = None
         self.traj_w = None
         self.baseline = None
+
+        # Keyboard control
+        self.fd = sys.stdin
+        self.tty_settings = termios.tcgetattr(self.fd)
 
     def str_input(self):
         """"Get the desired steering angle in radians from terminal
@@ -81,9 +86,7 @@ class BackupTraj:
                        for i, theta_i in enumerate(theta_increments)]
             self.yr = [(-self.W / 2 - rl + rr * np.cos(theta_i), rr * np.sin(theta_i))
                        for i, theta_i in enumerate(theta_increments)]
-            # traj_wx = np.linspace(self.yl[0][0], self.yr[0][0], 100)
-            # traj_wy = np.linspace(self.yl[0][1], self.yr[0][1], 100)
-            # self.traj_w = [traj_wx, traj_wy]
+
         if self.delta > 0:
             theta = self.lookahead_len / (rr + self.W / 2)
             theta_increments = np.linspace(theta, 0, 100)
@@ -91,9 +94,6 @@ class BackupTraj:
                        for i, theta_i in enumerate(theta_increments)]
             self.yr = [(self.W / 2 + rr * (1 - np.cos(theta_i)), rr * np.sin(theta_i))
                        for i, theta_i in enumerate(theta_increments)]
-            # traj_wx = np.linspace(self.yl[0][0], self.yr[0][0], 100)
-            # traj_wy = np.linspace(self.yl[0][1], self.yr[0][1], 100)
-            # self.traj_w = [traj_wx, traj_wy]
 
         if visualization:
             x, y = zip(*self.yl)
@@ -117,7 +117,6 @@ class BackupTraj:
             plt.savefig("top_down_view.svg")
             plt.show()
 
-
     def coordinate_transform(self):
         """
         Transform trajectory points in the cartesian frame to the pixel frame.
@@ -127,14 +126,9 @@ class BackupTraj:
         :return: The trajectory in the pixels frames
         """
 
-        # Initialize the camera intrinsic parameters
-        fx = 1907.78
-        fy = 1908.92
-        cx = 986.75
-        cy = 547.373
         # Initialize the camera extrinsic parameter
         h = 0.65
-        theta = np.radians(0)
+        theta = np.radians(13)
 
         # Load trajectories
         xl, yl = zip(*self.yl)
@@ -234,7 +228,8 @@ class BackupTraj:
 
         return base_l, base_r, base_w4, base_w2, base_w, traj_l, traj_r
 
-    def cam2pix(self, theta, h, xw, zw):
+    @staticmethod
+    def cam2pix(theta, h, xw, zw):
         """
         The formula for coordinate transform
         :param theta: the angle between horizontal line and camera facing
@@ -247,21 +242,16 @@ class BackupTraj:
         # Initialize the camera intrinsic parameters
         fx = 1907.78
         fy = 1908.92
-        cx = 986.75
+        cx = 982.75
         cy = 547.373
 
-        # u = ((xw * fx) / zw) + cx
-        # v = ((h * fy) / zw) + cy
-
-        # u = ((xw * fx)+cx*np.cos(theta)*zw)/(-np.sin(theta)*h+zw*np.cos(theta))
-        # v = ((np.sin(theta) * zw + h) * fy + cy * np.cos(theta) * zw) / (-np.sin(theta) * h + zw * np.cos(theta))
-
-        u = cx + (fx*xw)/(h*np.sin(theta)+np.cos(theta)*zw)
-        v = cy + fy*(h*np.cos(theta)-np.sin(theta)*zw)/(h*np.sin(theta)+np.cos(theta)*zw)
+        u = cx + (fx * xw) / (h * np.sin(theta) + np.cos(theta) * zw)
+        v = cy + fy * (h * np.cos(theta) - np.sin(theta) * zw) / (h * np.sin(theta) + np.cos(theta) * zw)
 
         return u, v
 
-    def out_of_screen(self, u, v):
+    @staticmethod
+    def out_of_screen(u, v):
         """
         # Exclude each trajectory pixels out of the screen (the camera dead zone)
         :param u: u value in pixel frame
@@ -275,31 +265,56 @@ class BackupTraj:
 
     def visualization(self):
         """
-        Visualize the trajectory in the recorded video
+        Visualize the trajectory in the recorded video, pressing a represents turning left ,
+        pressing d represents turning right.
         """
         cap = cv2.VideoCapture(self.fp)
 
         # Check if camera opened successfully
         if cap.isOpened() is False:
             print("Error opening video file")
-        bl, br, bw4, bw2, bw, tl, tr = self.coordinate_transform()
 
         # Read until video is completed
         while cap.isOpened():
+            hot_key = self.get_key()
+            if hot_key == "a":
+                self.delta -= np.radians(1)
+            if hot_key == "d":
+                self.delta += np.radians(1)
+
+            # Get the pixel points
+            self.traj_cartesian()
+            bl, br, bw4, bw2, bw, tl, tr = self.coordinate_transform()
+
             ret, frame = cap.read()
-            # # Visualize the dynamic trajectory
-            frame = cv2.polylines(frame, [tl, tr], False, (0, 255, 100), 8)
-            # Visualize the baseline
-            frame = cv2.polylines(frame, [bl, bw4, br], False, (0, 180, 255), 8)
-            # Visualize the baseline interval
-            frame = cv2.polylines(frame, [bw2], False, (0, 70, 255), 8)
-            frame = cv2.polylines(frame, [bw], False, (0, 0, 255), 8)
-            cv2.imshow('Dynamic Backup Line', frame)
-            if cv2.waitKey(30) & 0xFF == ord('q'):
+            if ret is True:
+                # # Visualize the dynamic trajectory
+                frame = cv2.polylines(frame, [tl, tr], False, (0, 255, 100), 8)
+                # Visualize the baseline
+                frame = cv2.polylines(frame, [bl, bw4, br], False, (0, 180, 255), 8)
+                # Visualize the baseline interval
+                frame = cv2.polylines(frame, [bw2], False, (0, 70, 255), 8)
+                frame = cv2.polylines(frame, [bw], False, (0, 0, 255), 8)
+                cv2.imshow('Dynamic Backup Line', frame)
+                print("Current steering angle is:", np.degrees(self.delta))
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+            else:
                 break
         # Release the VideoCapture and close all windows
         cap.release()
         cv2.destroyAllWindows()
+
+    def get_key(self):
+        """
+        Get the hotkey value from the terminal
+        :return: hotkey value
+        """
+        tty.setraw(sys.stdin.fileno())
+        key = sys.stdin.read(1)
+        termios.tcsetattr(self.fd, termios.TCSADRAIN, self.tty_settings)
+        return key
 
 
 if __name__ == "__main__":
