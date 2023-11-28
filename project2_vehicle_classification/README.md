@@ -1,4 +1,4 @@
-# Dynamic backup line 
+# YOLOv5 Vehicle detection
 
 This is assignment 2 vehicle detection.
 ![demo](https://github.com/TongshenH/harbinger_assignment/blob/master/project2_vehicle_classification/materials/backup_integration.gif)
