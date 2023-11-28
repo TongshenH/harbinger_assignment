@@ -9,8 +9,7 @@ Run the below command in the terminal:
 
 `Python3 backup_traj.py` 
 
-Type your desired steering agnle (deg), press a to turn right, press d to turn left. Press any other hotkey to move video 
-frame forward.
+Type your desired steering agnle (deg), press a to turn right, press d to turn left.
 
 ## Method
 
